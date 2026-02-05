@@ -1,0 +1,55 @@
+{
+    "version": 1,
+    "name": "ArcontioInputActions",
+    "maps": [
+        {
+            "name": "Global",
+            "id": "6db9c353-1781-4823-9e71-d27b07e3afdb",
+            "actions": [
+                {
+                    "name": "SwitchToAtomViewer",
+                    "type": "Button",
+                    "id": "1ae302a6-a7be-4612-a95c-0bdec64811cc",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "SwitchToMap",
+                    "type": "Button",
+                    "id": "22e9a75a-f7c3-4ffc-9446-5d4ea752f178",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "62df6817-3977-4fc6-a252-3334e558d79f",
+                    "path": "<Keyboard>/f1",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SwitchToAtomViewer",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f7ca5ded-64f3-46c2-afa5-f90b64ab4438",
+                    "path": "<Keyboard>/f2",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SwitchToMap",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}

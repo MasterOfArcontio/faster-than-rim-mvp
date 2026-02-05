@@ -1,0 +1,46 @@
+{
+  "events": [
+    {
+      "atTime": 0.5,
+      "type": "SetGroup",
+      "magnetKey": 1,
+      "leaderId": 34,
+      "members": [ 34, 10, 11, 12, 13, 14, 15, 2, 3, 4, 5, 6, 7, 8, 9, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68 ],
+      "cohesion01": 0.7,
+      "attraction01": 0.8
+    },
+    {
+      "atTime": 2.0,
+      "type": "UpdateParams",
+      "magnetKey": 1,
+      "cohesion01": 0.95,
+      "attraction01": 1.0
+    },
+    {
+      "atTime": 3.5,
+      "type": "ChangeLeader",
+      "magnetKey": 1,
+      "leaderId": 12
+    },
+    {
+      "atTime": 5.0,
+      "type": "AddMembers",
+      "magnetKey": 1,
+      "members": [ 16, 17, 18 ]
+    },
+    {
+      "atTime": 6.5,
+      "type": "SetGroup",
+      "magnetKey": 2,
+      "leaderId": 50,
+      "members": [ 50, 51, 52, 53, 54 ],
+      "cohesion01": 0.4,
+      "attraction01": 0.6
+    },
+    {
+      "atTime": 8.0,
+      "type": "ClearGroup",
+      "magnetKey": 1
+    }
+  ]
+}

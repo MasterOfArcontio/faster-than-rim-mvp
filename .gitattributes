@@ -1,0 +1,21 @@
+# Default: normalizza i line endings
+* text=auto
+
+# C# sempre LF (ok anche su Windows)
+*.cs text eol=lf
+
+# Unity YAML / asset
+*.asset text eol=lf
+*.unity text eol=lf
+*.prefab text eol=lf
+
+# JSON
+*.json text eol=lf
+
+# Binari (mai toccare)
+*.png binary
+*.jpg binary
+*.psd binary
+*.fbx binary
+*.wav binary
+*.mp3 binary

@@ -1,0 +1,47 @@
+{
+  "mapWidth": 128,
+  "mapHeight": 128,
+
+  "tileSizeWorld": 1.0,
+  "tilePixels": 32,
+
+  "chunkSize": 16,
+
+  "terrainAtlasResourcePath": "MapGrid/Atlas/TerrainAtlas",
+  "tileDefs": [
+    {
+      "id": 0,
+      "name": "iron_barren",
+      "uvX": 0,
+      "uvY": 0
+    },
+    {
+      "id": 1,
+      "name": "rocky",
+      "uvX": 1,
+      "uvY": 0
+    }
+  ],
+
+  "layoutResourcePath": "MapGrid/Layouts/Layout_Default",
+
+  "camera": {
+    "startZoom": 18.0,
+    "minZoom": 6.0,
+    "maxZoom": 40.0,
+    "zoomSpeed": 2.0,
+
+    "panSmoothTime": 1,
+    "panMaxSpeed": 250.0,
+    "rightMouseDragPan": true,
+
+
+    "edgePanBorderPx": 18,
+    "edgePanSpeedWorld": 18.0
+  },
+
+  "npc": {
+    "spriteResourcePath": "MapGrid/Sprites/NPC_Astro",
+    "spawnCount": 12
+  }
+}
