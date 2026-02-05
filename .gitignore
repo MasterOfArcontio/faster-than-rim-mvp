@@ -17,3 +17,6 @@ UserSettings/
 # OS
 .DS_Store
 Thumbs.db
+
+*.sln
+*.slnx
