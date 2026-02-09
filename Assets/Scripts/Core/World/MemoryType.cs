@@ -23,13 +23,16 @@ namespace Arcontio.Core
         DeathOfBonded,
         DeathHeard,
 
+        // NEW (giorno 6)
+        AidRequested,
+
+        // NEW (giorno 8 - oggetti)
+        ObjectSpotted,
+
         // Crime (future)
         TheftWitnessed,
         TheftSuffered,
         RobberyWitnessed,
         RobberySuffered,
-
-        // Richieste d'aiuto ricevute (token -> trace)
-        AidRequested,
     }
 }

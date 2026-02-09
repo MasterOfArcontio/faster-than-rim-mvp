@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-
 namespace Arcontio.Core
 {
     /// <summary>
@@ -44,8 +43,6 @@ namespace Arcontio.Core
         /// </summary>
         public void Emit(World world, Tick tick, TokenBus tokenBus, Telemetry telemetry)
         {
-            UnityEngine.Debug.Log($"[TokenEmit] tick={tick.Index} npcCount={world.NpcCore.Count} tokenOutCount(before)={tokenBus.Count}");
-
             // Parametri da World (configurabili)
             int maxPerEncounter = world.Global.MaxTokensPerEncounter;
             if (maxPerEncounter <= 0) maxPerEncounter = 1;
@@ -81,9 +78,19 @@ namespace Arcontio.Core
                     int dist = Manhattan(pa.X, pa.Y, pb.X, pb.Y);
                     if (dist > _contactRadius) continue;
 
-                    // incontro: A->B e B->A (simmetrico)
-                    envelopesEmitted += EmitForPair(world, tick, tokenBus, telemetry, a, b, maxPerEncounter, maxPerDay, cooldownTicks);
-                    envelopesEmitted += EmitForPair(world, tick, tokenBus, telemetry, b, a, maxPerEncounter, maxPerDay, cooldownTicks);
+                    // NEW (Giorno 8): orientamento per "parlare".
+                    // Regola v0:
+                    // - ProximityTalk richiede che A stia guardando B (B nella cella frontale di A)
+                    // - e viceversa per B->A
+                    // - AlarmShout invece ignora orientamento (ma oggi emission non decide canale; le rule lo fanno)
+                    bool aCanTalkToB = CanDirectlyTalk(world, a, b);
+                    bool bCanTalkToA = CanDirectlyTalk(world, b, a);
+
+                    if (aCanTalkToB)
+                        envelopesEmitted += EmitForPair(world, tick, tokenBus, telemetry, a, b, maxPerEncounter, maxPerDay, cooldownTicks);
+
+                    if (bCanTalkToA)
+                        envelopesEmitted += EmitForPair(world, tick, tokenBus, telemetry, b, a, maxPerEncounter, maxPerDay, cooldownTicks);
                 }
             }
 
@@ -91,15 +98,15 @@ namespace Arcontio.Core
         }
 
         private int EmitForPair(
-                   World world,
-                   Tick tick,
-                   TokenBus tokenBus,
-                   Telemetry telemetry,
-                   int speakerId,
-                   int listenerId,
-                   int maxPerEncounter,
-                   int maxPerDay,
-                   int cooldownTicks)
+            World world,
+            Tick tick,
+            TokenBus tokenBus,
+            Telemetry telemetry,
+            int speakerId,
+            int listenerId,
+            int maxPerEncounter,
+            int maxPerDay,
+            int cooldownTicks)
         {
             if (!world.Memory.TryGetValue(speakerId, out var store) || store == null)
                 return 0;
@@ -110,10 +117,6 @@ namespace Arcontio.Core
 
             // scegliamo le top trace dello speaker
             store.GetTopTraces(_topN, _topTraces);
-
-            UnityEngine.Debug.Log($"[TokenEmit] speaker={speakerId} listener={listenerId} topTraces={_topTraces.Count}");
-            if (_topTraces.Count > 0)
-                UnityEngine.Debug.Log($"[TokenEmit] top0={_topTraces[0]}");
 
             int emittedThisEncounter = 0;
 
@@ -146,9 +149,6 @@ namespace Arcontio.Core
                     {
                         tokenBus.Publish(env);
 
-                        // DEBUG: log del token emesso (non consuma il TokenBus)
-                        Debug.Log($"[TokenEmit] {env}");
-
                         _lastShareTick[key] = tick.Index;
 
                         emittedThisEncounter++;
@@ -175,6 +175,42 @@ namespace Arcontio.Core
             int dx = ax - bx; if (dx < 0) dx = -dx;
             int dy = ay - by; if (dy < 0) dy = -dy;
             return dx + dy;
+        }
+
+        // -------------------------
+        // NEW (Giorno 8): talking + facing
+        // -------------------------
+
+        /// <summary>
+        /// CanDirectlyTalk:
+        /// Regola v0 per ProximityTalk:
+        /// - speaker e listener devono essere in celle adiacenti (Manhattan=1)
+        /// - listener deve essere nella cella "frontale" dello speaker (in base a Facing)
+        ///
+        /// Questo serve per evitare che “parlino” anche se sono spalla-a-spalla o dietro.
+        /// </summary>
+        private static bool CanDirectlyTalk(World world, int speakerId, int listenerId)
+        {
+            if (!world.GridPos.TryGetValue(speakerId, out var sp)) return false;
+            if (!world.GridPos.TryGetValue(listenerId, out var li)) return false;
+
+            int dist = Manhattan(sp.X, sp.Y, li.X, li.Y);
+            if (dist != 1) return false;
+
+            if (!world.NpcFacing.TryGetValue(speakerId, out var facing))
+                facing = CardinalDirection.North;
+
+            int dx = li.X - sp.X;
+            int dy = li.Y - sp.Y;
+
+            switch (facing)
+            {
+                case CardinalDirection.North: return dx == 0 && dy == 1;
+                case CardinalDirection.South: return dx == 0 && dy == -1;
+                case CardinalDirection.East: return dx == 1 && dy == 0;
+                case CardinalDirection.West: return dx == -1 && dy == 0;
+                default: return false;
+            }
         }
 
         /// <summary>

@@ -19,6 +19,7 @@ namespace Arcontio.Core
         private readonly List<IMemoryRule> _rules = new();
 
         // Buffer di eventi del tick (riusato, assegnato dal SimulationHost)
+        //private List<IWorldEvent> _eventsBuffer;
         private List<ISimEvent> _eventsBuffer;
 
         // Buffer ids NPC per iterazione
@@ -28,15 +29,20 @@ namespace Arcontio.Core
         {
             // Catalogo minimo rules (espandibile)
             _rules.Add(new PredatorSpottedMemoryRule());
-            _rules.Add(new AttackSufferedMemoryRule());
             _rules.Add(new AttackWitnessedMemoryRule());
-            _rules.Add(new DeathOfBondedMemoryRule());      // NEW (stub)
             _rules.Add(new DeathWitnessedMemoryRule());
+
+            // NEW (Giorno 8): oggetti visti -> memoria
+            _rules.Add(new ObjectSpottedMemoryRule());
         }
 
         /// <summary>
         /// Il SimulationHost assegna qui la lista di eventi drainata dal bus.
         /// </summary>
+        /*public void SetEventsBuffer(List<IWorldEvent> eventsBuffer)
+        {
+            _eventsBuffer = eventsBuffer;
+        }*/
         public void SetEventsBuffer(List<ISimEvent> eventsBuffer)
         {
             _eventsBuffer = eventsBuffer;
@@ -59,10 +65,6 @@ namespace Arcontio.Core
             {
                 var e = _eventsBuffer[eIdx];
 
-                // Processiamo solo eventi di mondo
-                if (e is not IWorldEvent)
-                    continue;
-
                 // Trova una rule compatibile (oggi: poche, quindi lineare è ok)
                 for (int r = 0; r < _rules.Count; r++)
                 {
@@ -77,15 +79,15 @@ namespace Arcontio.Core
 
                         // Perception quality: per ora basata solo su distanza e range.
                         // - se l'evento ha cella, usiamo quella
-                        // - se non ha cella, skip (oggi tutti i nostri eventi hanno cella)
+                        // - se non ha cella, skip
                         if (!TryGetEventCell(e, out int ex, out int ey))
                             continue;
 
                         if (!world.GridPos.TryGetValue(npcId, out var p))
                             continue;
 
-                        // Range visivo: per ora usiamo VisionRange dal Needs/Social? Non c'è.
-                        // Quindi usiamo un default fisso. (Poi lo sposteremo su PerceptionComponent)
+                        // Range visivo: per ora usiamo un default fisso.
+                        // (Poi lo sposteremo su PerceptionComponent)
                         int visionRange = 6;
 
                         int dist = Manhattan(p.X, p.Y, ex, ey);
@@ -96,32 +98,35 @@ namespace Arcontio.Core
                         float quality = 1f - (dist / (float)visionRange);
                         if (quality < 0.05f) quality = 0.05f;
 
+                        telemetry.Counter("MemoryEncodingSystem.TracesEncodedAttempts", 1);
+
                         if (rule.TryEncode(world, npcId, e, quality, out var trace))
                         {
-                            // Hook: spatial fusion (se attiva)
-                            // Serve a considerare un'area e non una singola cella nella creazione di una memoria
-                            if (world.Global.EnableMemorySpatialFusion)
-                            {
-                                int size = world.Global.MemoryRegionSizeCells;
-                                SpatialQuantizer.QuantizeCell(trace.CellX, trace.CellY, size, out int rx, out int ry);
-
-                                // Qui scegliamo che cosa significa "zona":
-                                // - sovrascriviamo CellX/Y con la macro-cella
-                                trace.CellX = rx;
-                                trace.CellY = ry;
-                            }
-
                             // Inserisci nello store dell'NPC
-                            world.Memory[npcId].AddOrMerge(trace);
+                            var res = world.Memory[npcId].AddOrMerge(trace);
 
-UnityEngine.Debug.Log($"[MemEnc] npc={npcId} +trace={trace.Type} subj={trace.SubjectId} cell=({trace.CellX},{trace.CellY}) q={quality:0.00}");
+                            switch (res)
+                            {
+                                case AddOrMergeResult.Inserted:
+                                    telemetry.Counter("MemoryEncodingSystem.TracesActuallyInserted", 1);
+                                    break;
+                                case AddOrMergeResult.Replaced:
+                                    telemetry.Counter("MemoryEncodingSystem.TracesActuallyInserted", 1);
+                                    telemetry.Counter("MemoryEncodingSystem.TracesReplaced", 1);
+                                    break;
+                                case AddOrMergeResult.Reinforced:
+                                    telemetry.Counter("MemoryEncodingSystem.TracesReinforced", 1);
+                                    break;
+                                case AddOrMergeResult.Dropped:
+                                    telemetry.Counter("MemoryEncodingSystem.TracesDropped", 1);
+                                    break;
+                            }
 
                             tracesAdded++;
                         }
                     }
 
                     // Regola trovata e applicata: non cerchiamo altre rule per lo stesso evento.
-                    // (Se in futuro vuoi più tracce per evento, togli questo break.)
                     break;
                 }
             }
@@ -136,6 +141,7 @@ UnityEngine.Debug.Log($"[MemEnc] npc={npcId} +trace={trace.Type} subj={trace.Sub
             return dx + dy;
         }
 
+//        private static bool TryGetEventCell(IWorldEvent e, out int x, out int y)
         private static bool TryGetEventCell(ISimEvent e, out int x, out int y)
         {
             // In questa fase, estraiamo la cella con pattern match.
@@ -148,6 +154,11 @@ UnityEngine.Debug.Log($"[MemEnc] npc={npcId} +trace={trace.Type} subj={trace.Sub
                     x = d.CellX; y = d.CellY; return true;
                 case PredatorSpottedEvent p:
                     x = p.CellX; y = p.CellY; return true;
+
+                // NEW (Giorno 8)
+                case ObjectSpottedEvent o:
+                    x = o.CellX; y = o.CellY; return true;
+
                 default:
                     x = y = 0;
                     return false;

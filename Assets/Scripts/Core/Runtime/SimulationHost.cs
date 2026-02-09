@@ -1,3 +1,4 @@
+// Assets/Scripts/Core/Runtime/SimulationHost.cs
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,6 +18,20 @@ namespace Arcontio.Core
         [Header("Tick")]
         [SerializeField] private float tickDeltaTime = 1f; // tempo simulato per tick (es. 1 = 1 minuto)
         [SerializeField] private int ticksPerSecond = 10;  // velocità simulazione (tick/secondo reali)
+
+        [Header("Debug Scenarios")]
+        [SerializeField] private DebugScenario debugScenario = DebugScenario.Day7_Delivery;
+
+        private enum DebugScenario
+        {
+            Day6_Assimilation = 6,
+            Day7_Delivery = 7,
+            Day8_ObjectPerception = 8
+        }
+
+        // Day8: log sintetico per tick (solo per questo scenario)
+        [SerializeField] private int day8LogEveryTicks = 10;
+
 
         // Core state
         private World _world;
@@ -77,7 +92,7 @@ namespace Arcontio.Core
 
         private void Awake()
         {
-            Debug.Log("[SimulationHost] Awake START");
+            Debug.Log(Application.persistentDataPath);
 
             // Anti-duplicazione: se esiste già un host, distruggo questo.
             if (Instance != null && Instance != this)
@@ -93,11 +108,13 @@ namespace Arcontio.Core
             _scheduler = new Scheduler();
             _telemetry = new Telemetry();
 
-            // NEW (Giorno 5, scelta B):
-            // - TokenBus è una pipe separata dal MessageBus
-            // - TokenEmissionPipeline NON è uno ISystem: viene chiamata manualmente in StepOneTick.
-            //_tokenBus = new TokenBus();
-            //_tokenEmission = new TokenEmissionPipeline(contactRadius: 1, topN: 6);
+            // NEW (Giorno 8):
+            // Carichiamo definizioni oggetti da JSON (Resources/Config/object_defs.json).
+            ObjectDatabaseLoader.LoadIntoWorld(_world);
+
+            // Systems (basso livello)
+            // - Perception oggetti: genera eventi ObjectSpottedEvent
+            _scheduler.AddSystem(new ObjectPerceptionSystem());
 
             // Giorno 7: separiamo token "pronunciati" da token "arrivati"
             _tokenBusOut = new TokenBus();
@@ -113,10 +130,6 @@ namespace Arcontio.Core
             // NEW: pipeline di assimilazione (giorno 6)
             _tokenAssim = new TokenAssimilationPipeline();
 
-            //var memEnc = new MemoryEncodingSystem();
-            //memEnc.SetEventsBuffer(_eventBuffer);
-            //_scheduler.AddSystem(memEnc);
-
             // Metto qui e non nello scheduler l'encoding della memoria per problemi di sincronia
             // (deve vedere ESATTAMENTE gli eventi del tick drainati nel buffer)
             _memoryEncoding = new MemoryEncodingSystem();
@@ -130,16 +143,14 @@ namespace Arcontio.Core
             // NEW: decadimento memoria (non fa nulla finché lo store è vuoto)
             _scheduler.AddSystem(new MemoryDecaySystem());
 
-            //_scheduler.AddSystem(new TokenEmissionSystem(contactRadius: 1, topN: 6));
-            // NOTA: TokenEmissionSystem non esiste nella scelta B.
-            // L'emissione token avviene via _tokenEmission.Emit(...) nel tick.
-
             // Rules (alto livello)
             _rules.Add(new DebugEventLogRule());
             _rules.Add(new BasicSurvivalRule());
 
             // Seed iniziale
             EnsureSeeded();
+
+            Debug.Log($"[TEST] Scenario={debugScenario}");
         }
 
         private void Update()
@@ -175,14 +186,15 @@ namespace Arcontio.Core
             if ((_tickIndex % 50) == 0)
                 _bus.Publish(new TickPulseEvent(_tickIndex));
 
-            // DEBUG - Genero eventi fittizi per testare creazione di memorie
-            // IMPORTANTE: se vuoi che l'evento sia codificato nel tick corrente,
-            // deve essere pubblicato PRIMA del DrainTo(...) (cioè prima del punto 3).
-            if ((_tickIndex % 50) == 0)
-            {
-                Debug.Log($"[EventTest] Creato un nuovo evento");
+            // ============================================================
+            // TEST STIMULI (Day6 / Day7 / Day8)
+            // Inseriamo SOLO ciò che serve a generare segnali chiari.
+            // ============================================================
 
-                // Mettiamo un evento in una cella vicino ai primi NPC (es. 0,0)
+            // Day6: generiamo un evento "oggettivo" che finisce in memoria, poi token, poi assimilation.
+            if (debugScenario == DebugScenario.Day6_Assimilation && ((_tickIndex % 50) == 0))
+            {
+                Debug.Log($"[T6][Event] PredatorSpotted injected at tick={_tickIndex}");
                 _bus.Publish(new PredatorSpottedEvent(
                     spotterNpcId: 1,
                     predatorId: 999,
@@ -190,6 +202,48 @@ namespace Arcontio.Core
                     cellY: 0,
                     distanceCells: 1,
                     spotQuality01: 1f));
+            }
+
+            // Day7: iniettiamo DIRETTAMENTE un AlarmShout in TokenBusOut
+            // (così testiamo Delivery BFS anche se le emission rule di default parlano “ProximityTalk”).
+            if (debugScenario == DebugScenario.Day7_Delivery && ((_tickIndex % 50) == 0))
+            {
+                var shout = new SymbolicToken(
+                    type: TokenType.PredatorAlert,
+                    subjectId: 999,
+                    intensity01: 1.0f,
+                    reliability01: 1.0f,
+                    chainDepth: 0,
+                    hasCell: true,
+                    cellX: 0,
+                    cellY: 0);
+
+                // Coppia A: 1 -> 2
+                _tokenBusOut.Publish(new TokenEnvelope(
+                    speakerId: 1,
+                    listenerId: 2,
+                    channel: TokenChannel.AlarmShout,
+                    tickIndex: _tickIndex,
+                    token: shout));
+
+                // Coppia B: 3 -> 4
+                _tokenBusOut.Publish(new TokenEnvelope(
+                    speakerId: 3,
+                    listenerId: 4,
+                    channel: TokenChannel.AlarmShout,
+                    tickIndex: _tickIndex,
+                    token: shout));
+
+                Debug.Log($"[T7][Inject] AlarmShout published (1->2 and 3->4) tick={_tickIndex}");
+            }
+
+            // Day8: non serve iniettare eventi a mano: ObjectPerceptionSystem li produce da solo.
+            // Qui lasciamo che i log siano:
+            // - Telemetry.ObjectPerception.SpottedEvents
+            // - (se vuoi) un tuo log aggiuntivo ogni 50 tick
+            if (debugScenario == DebugScenario.Day8_ObjectPerception && ((_tickIndex % 50) == 0))
+            {
+                Debug.Log($"[T8][Info] tick={_tickIndex} objects={_world.Objects.Count} vision={_world.Global.NpcVisionRangeCells}");
             }
 
             // 3) Drain eventi in buffer (così possiamo farci sopra encoding memoria)
@@ -207,6 +261,9 @@ namespace Arcontio.Core
             // 3.15 Token emission (trace -> token) su pipe separata
             // Trasformiamo alcune trace importanti in TokenEnvelope e le mettiamo nel TokenBus.
             // Nota: questo NON tocca il MessageBus e NON influenza direttamente le Rule.
+            //
+            // Nota test:
+            // - Day7 inietta anche token manualmente su _tokenBusOut (AlarmShout) per testare BFS delivery.
             _tokenEmission.Emit(_world, tick, _tokenBusOut, _telemetry);
 
             // NEW Giorno 7:
@@ -243,8 +300,23 @@ namespace Arcontio.Core
             if (_tickIndex % 20 == 0)
             {
                 int a = _world.Memory[1].Traces.Count;
-                int b = _world.Memory[2].Traces.Count;
+                int b = _world.Memory.Count >= 2 ? _world.Memory[2].Traces.Count : 0;
                 Debug.Log($"[MemoryTest] npc1 traces={a} npc2 traces={b}");
+            }
+
+            // ============================================================
+            // Day8: log sintetico per tick (solo qui)
+            // - Non vogliamo spam in Day6/Day7.
+            // - In Day8 vogliamo vedere "quali oggetti" vengono visti.
+            // ============================================================
+            if (debugScenario == DebugScenario.Day8_ObjectPerception)
+            {
+                if (day8LogEveryTicks <= 0) day8LogEveryTicks = 10;
+
+                if ((_tickIndex % day8LogEveryTicks) == 0)
+                {
+                    LogDay8Snapshot(tick);
+                }
             }
 
             _tickIndex++;
@@ -271,28 +343,96 @@ namespace Arcontio.Core
 
         private void SeedTestWorld()
         {
+            // Seed multiplo: scegliamo UNO scenario per volta,
+            // così i log sono chiari e non si sovrappongono.
+            switch (debugScenario)
+            {
+                case DebugScenario.Day6_Assimilation:
+                    Seed_Day6();
+                    break;
+
+                case DebugScenario.Day7_Delivery:
+                    Seed_Day7();
+                    break;
+
+                case DebugScenario.Day8_ObjectPerception:
+                    Seed_Day8();
+                    break;
+
+                default:
+                    Seed_Day7();
+                    break;
+            }
+        }
+
+        // ============================================================
+        // DAY 6: Assimilation test (token -> trace heard/rumor)
+        // ============================================================
+        private void Seed_Day6()
+        {
+            Debug.Log("[T6][Seed] Day6_Assimilation");
+
             _world.Global.FoodStock = 50;
 
             // Per ora la gestione delle regioni come memoria spaziale è inserita come progetto ma non implementata
             _world.Global.EnableMemorySpatialFusion = false;
             _world.Global.MemoryRegionSizeCells = 4;
 
-            // --- Token params (Giorno 5/6/7) ---
+            // Token budget alto per test
             _world.Global.MaxTokensPerEncounter = 2;
-            _world.Global.MaxTokensPerNpcPerDay = 50;       // alto per test (così non “strozza” l’esperimento)
-            _world.Global.RepeatShareCooldownTicks = 0;     // per test: vogliamo vedere emissioni ripetute
+            _world.Global.MaxTokensPerNpcPerDay = 50;
+            _world.Global.RepeatShareCooldownTicks = 0;
 
-            // --- Giorno 7: delivery params ---
-            // Aumenta un po’ il range così nella coppia col muro lungo il suono “può” arrivare facendo il giro,
-            // ma degradato.
+            // Delivery “neutro”: nessun muro, LOS off (così non blocchi per caso)
             _world.Global.TokenDeliveryMaxRangeCells = 10;
+            _world.Global.EnableTokenLOS = false;
 
-            // LOS: serve per ProximityTalk/TargetedVisit (ottico). AlarmShout invece userà BFS acustico.
+            // Falloff quasi nullo per rendere i valori leggibili e stabili
+            _world.Global.TokenReliabilityFalloffPerCell = 0.00f;
+            _world.Global.TokenIntensityFalloffPerCell = 0.00f;
+
+            // 2 NPC vicini così emission trova contatto facilmente
+            int a = CreateNpcAt(0, 0, "NPC_T6_A");
+            int b = CreateNpcAt(1, 0, "NPC_T6_B");
+
+            _world.SetFacing(a, CardinalDirection.East);
+            _world.SetFacing(b, CardinalDirection.West);
+
+            Debug.Log("[T6][Seed] Expectation: on tick%50 PredatorSpotted -> memory -> token -> assimilation (heard trace on listener).");
+
+            int CreateNpcAt(int x, int y, string name)
+            {
+                return _world.CreateNpc(
+                    new NpcCore { Name = name, Charisma = 0.4f, Decisiveness = 0.4f, Empathy = 0.4f, Ambition = 0.4f },
+                    new Needs { Hunger01 = 0.1f, Fatigue01 = 0.1f, Morale01 = 0.7f, HungerRate = 0.01f, FatigueRate = 0.005f },
+                    new Social { LeadershipScore = 0.2f, LoyaltyToLeader01 = 0.5f, JusticePerception01 = 0.5f },
+                    x, y
+                );
+            }
+        }
+
+        // ============================================================
+        // DAY 7: Delivery test (range/LOS + BFS shout detour)
+        // ============================================================
+        private void Seed_Day7()
+        {
+            Debug.Log("[T7][Seed] Day7_Delivery");
+
+            _world.Global.FoodStock = 50;
+
+            // Token params (Giorno 5/6/7)
+            _world.Global.MaxTokensPerEncounter = 2;
+            _world.Global.MaxTokensPerNpcPerDay = 50;
+            _world.Global.RepeatShareCooldownTicks = 0;
+
+            // Delivery params (Giorno 7)
+            _world.Global.TokenDeliveryMaxRangeCells = 10;
             _world.Global.EnableTokenLOS = true;
-
-            // Degrado con distanza (valori “visibili” in log)
             _world.Global.TokenReliabilityFalloffPerCell = 0.06f;
             _world.Global.TokenIntensityFalloffPerCell = 0.04f;
+
+            // NEW (Giorno 8): range visivo base (non è il focus qui, ma serve comunque a non avere valori 0)
+            _world.Global.NpcVisionRangeCells = 6;
 
             // ============================================================
             // SCENARIO GUIDATO: 2 coppie separate da muri diversi
@@ -303,48 +443,155 @@ namespace Arcontio.Core
             // Coppia B (muro lungo, più blocchi):
             //   NPC_B1 (0,5)  | muro lungo su x=1 da y=4..6 | NPC_B2 (2,5)
             //
-            // In entrambi i casi i due NPC sono “di fronte” con un muro in mezzo.
-            // - ProximityTalk (LOS) -> verrà bloccato sia dal muro corto sia dal muro lungo.
-            // - AlarmShout (BFS) -> può “girare attorno”: nel caso muro lungo il giro è più lungo e degrada di più.
+            // In entrambi i casi:
+            // - ProximityTalk (LOS) -> bloccato dal muro pieno.
+            // - AlarmShout (BFS) -> aggira muri; muro lungo = detour maggiore => più degrado.
             // ============================================================
 
-            // --- Muro corto (1 blocco) ---
-            _world.SetOccluder(1, 0, new Occluder
-            {
-                BlocksVision = true,
-                BlocksMovement = true,
-                VisionCost = 1.0f
-            });
+            // Muro corto
+            _world.SetOccluder(1, 0, new Occluder { BlocksVision = true, BlocksMovement = true, VisionCost = 1.0f });
 
-            // --- Muro lungo (3 blocchi in colonna) ---
-            // “Parete” verticale che divide x=0.. e x=2.. attorno alla riga y=5
-            // Questo aumenta il detour per l’AlarmShout.
+            // Muro lungo
             _world.SetOccluder(1, 4, new Occluder { BlocksVision = true, BlocksMovement = true, VisionCost = 1.0f });
             _world.SetOccluder(1, 5, new Occluder { BlocksVision = true, BlocksMovement = true, VisionCost = 1.0f });
             _world.SetOccluder(1, 6, new Occluder { BlocksVision = true, BlocksMovement = true, VisionCost = 1.0f });
 
-            // --- Creiamo 4 NPC (2 coppie) ---
-            // Coppia A
-            CreateNpcAt(0, 0, "NPC_A1");
-            CreateNpcAt(2, 0, "NPC_A2");
+            int a1 = CreateNpcAt(0, 0, "NPC_A1");
+            int a2 = CreateNpcAt(2, 0, "NPC_A2");
+            int b1 = CreateNpcAt(0, 5, "NPC_B1");
+            int b2 = CreateNpcAt(2, 5, "NPC_B2");
 
-            // Coppia B
-            CreateNpcAt(0, 5, "NPC_B1");
-            CreateNpcAt(2, 5, "NPC_B2");
+            _world.SetFacing(a1, CardinalDirection.East);
+            _world.SetFacing(a2, CardinalDirection.West);
+            _world.SetFacing(b1, CardinalDirection.East);
+            _world.SetFacing(b2, CardinalDirection.West);
 
-            // Helper locale per evitare ripetizioni
-            void CreateNpcAt(int x, int y, string name)
+            Debug.Log("[T7][Seed] Expectation: every 50 ticks we inject AlarmShout (1->2 and 3->4). Delivery logs show different dist/deg for short vs long wall.");
+
+            int CreateNpcAt(int x, int y, string name)
             {
-                int npcId = _world.CreateNpc(
+                return _world.CreateNpc(
                     new NpcCore { Name = name, Charisma = 0.4f, Decisiveness = 0.4f, Empathy = 0.4f, Ambition = 0.4f },
                     new Needs { Hunger01 = 0.1f, Fatigue01 = 0.1f, Morale01 = 0.7f, HungerRate = 0.01f, FatigueRate = 0.005f },
                     new Social { LeadershipScore = 0.2f, LoyaltyToLeader01 = 0.5f, JusticePerception01 = 0.5f },
                     x, y
                 );
-
-                // Se vuoi, qui puoi differenziare parametri memoria per osservare decay diverso:
-                // _world.MemoryParams[npcId] = PersonalityMemoryParams.DefaultNpc();
             }
         }
+
+        // ============================================================
+        // DAY 8: Object perception test (cone FOV + ObjectSpottedEvent -> memory)
+        // ============================================================
+        private void Seed_Day8()
+        {
+            Debug.Log("[T8][Seed] Day8_ObjectPerception");
+
+            _world.Global.FoodStock = 50;
+
+            // Vision range per test
+            _world.Global.NpcVisionRangeCells = 6;
+            _world.Global.NpcVisionConeHalfWidthPerStep = 1.0f; // CONO attivo
+
+
+            // Token systems possono restare attivi, ma qui il focus è:
+            // ObjectPerceptionSystem -> ObjectSpottedEvent -> ObjectSpottedMemoryRule
+            _world.Global.MaxTokensPerEncounter = 0; // opzionale: “spengo” token per non inquinare log
+            _world.Global.MaxTokensPerNpcPerDay = 0;
+            _world.Global.RepeatShareCooldownTicks = 0;
+
+            // 1 NPC che guarda a Est
+            int npc = _world.CreateNpc(
+                new NpcCore { Name = "NPC_T8", Charisma = 0.4f, Decisiveness = 0.4f, Empathy = 0.4f, Ambition = 0.4f },
+                new Needs { Hunger01 = 0.1f, Fatigue01 = 0.1f, Morale01 = 0.7f, HungerRate = 0.01f, FatigueRate = 0.005f },
+                new Social { LeadershipScore = 0.2f, LoyaltyToLeader01 = 0.5f, JusticePerception01 = 0.5f },
+                0, 0
+            );
+
+            _world.SetFacing(npc, CardinalDirection.East);
+
+            // Piazziamo oggetti nel cono:
+            // - davanti (2,0) -> deve essere visto
+            // - diagonale davanti (2,1) -> deve essere visto (cono)
+            // - dietro ( -2,0 ) -> NON deve essere visto
+            _world.CreateObject(defId: "bed_wood_poor", x: 2, y: 0, ownerKind: OwnerKind.Npc, ownerId: npc);
+            _world.CreateObject(defId: "workbench_basic", x: 2, y: 1, ownerKind: OwnerKind.Community, ownerId: 0);
+            _world.CreateObject(defId: "chair_basic", x: -2, y: 0, ownerKind: OwnerKind.Community, ownerId: 0);
+
+            Debug.Log($"[T8][Info] tick=0 objects={_world.Objects.Count} vision={_world.Global.NpcVisionRangeCells} cone={_world.Global.NpcVisionConeHalfWidthPerStep:0.00}");
+        }
+
+        /// <summary>
+        /// LogDay8Snapshot:
+        /// Log sintetico solo nel seed Day8:
+        /// - elenca gli oggetti visibili per NPC_1 in questo momento (cone + range)
+        /// - ti permette di validare rapidamente “bed/workbench sì, chair dietro no”.
+        ///
+        /// Nota:
+        /// qui NON usiamo eventi: è una "sonda" di debug.
+        /// Serve a capire se la geometria di FOV è corretta senza rincorrere 100 eventi.
+        /// </summary>
+        private void LogDay8Snapshot(Tick tick)
+        {
+            // Assunzione test: esiste almeno npcId=1
+            int npcId = 1;
+            if (!_world.GridPos.TryGetValue(npcId, out var np))
+            {
+                Debug.Log($"[T8][Snap] tick={tick.Index} npc1 missing pos");
+                return;
+            }
+
+            if (!_world.NpcFacing.TryGetValue(npcId, out var facing))
+                facing = CardinalDirection.North;
+
+            int vision = _world.Global.NpcVisionRangeCells <= 0 ? 6 : _world.Global.NpcVisionRangeCells;
+            float cone = _world.Global.NpcVisionConeHalfWidthPerStep;
+            if (cone < 0f) cone = 0f;
+
+            // raccogli defId in set (no duplicati)
+            var seen = new HashSet<string>();
+
+            foreach (var kv in _world.Objects)
+            {
+                var obj = kv.Value;
+                if (obj == null) continue;
+
+                int dist = Mathf.Abs(obj.CellX - np.X) + Mathf.Abs(obj.CellY - np.Y);
+                if (dist > vision) continue;
+
+                // Riusa la stessa logica del sistema (replicata qui per debug)
+                if (!IsInCone_Debug(np.X, np.Y, facing, obj.CellX, obj.CellY, cone))
+                    continue;
+
+                seen.Add(obj.DefId);
+            }
+
+            string list = (seen.Count == 0) ? "<none>" : string.Join(", ", seen);
+            Debug.Log($"[T8][Snap] tick={tick.Index} npc1=({np.X},{np.Y}) facing={facing} vision={vision} cone={cone:0.00} sees={seen.Count} [{list}]");
+        }
+
+        // Copia ridotta della logica "IsInCone" per debug snapshot.
+        // (Tenuta qui per non dipendere da metodi privati del system)
+        private static bool IsInCone_Debug(int sx, int sy, CardinalDirection facing, int tx, int ty, float coneHalfWidthPerStep)
+        {
+            int dx = tx - sx;
+            int dy = ty - sy;
+
+            int forward, side;
+
+            switch (facing)
+            {
+                case CardinalDirection.North: forward = dy; side = dx; break;
+                case CardinalDirection.South: forward = -dy; side = -dx; break;
+                case CardinalDirection.East: forward = dx; side = -dy; break;
+                case CardinalDirection.West: forward = -dx; side = dy; break;
+                default: return false;
+            }
+
+            if (forward <= 0) return false;
+
+            int absSide = side < 0 ? -side : side;
+            return absSide <= Mathf.FloorToInt(forward * coneHalfWidthPerStep + 0.0001f);
+        }
+
     }
 }

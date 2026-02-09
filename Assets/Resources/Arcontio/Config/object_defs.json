@@ -1,0 +1,68 @@
+{
+  "Objects": [
+    {
+      "Id": "bed_wood_poor",
+      "DisplayName": "Wood Bed (Poor)",
+      "Properties": [
+        {
+          "Key": "AllowsAction.Sleep",
+          "Value": 1.0
+        },
+        {
+          "Key": "SleepRegenMultiplier",
+          "Value": 1.10
+        },
+        {
+          "Key": "ComfortBonus",
+          "Value": 0.10
+        }
+      ]
+    },
+    {
+      "Id": "bed_wood_good",
+      "DisplayName": "Wood Bed (Good)",
+      "Properties": [
+        {
+          "Key": "AllowsAction.Sleep",
+          "Value": 1.0
+        },
+        {
+          "Key": "SleepRegenMultiplier",
+          "Value": 1.35
+        },
+        {
+          "Key": "ComfortBonus",
+          "Value": 0.25
+        }
+      ]
+    },
+    {
+      "Id": "workbench_basic",
+      "DisplayName": "Workbench (Basic)",
+      "Properties": [
+        {
+          "Key": "AllowsAction.Work",
+          "Value": 1.0
+        },
+        {
+          "Key": "WorkSpeedMultiplier",
+          "Value": 1.15
+        }
+      ]
+    },
+    {
+      "Id": "chair_basic",
+      "DisplayName": "Chair (Basic)",
+      "Properties": [
+        {
+          "Key": "AllowsAction.Sit",
+          "Value": 1.0
+        },
+        {
+          "Key": "ComfortBonus",
+          "Value": 0.08
+        }
+      ]
+    }
+  ]
+}

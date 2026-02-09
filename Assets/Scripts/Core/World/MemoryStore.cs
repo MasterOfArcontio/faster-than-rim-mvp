@@ -3,6 +3,18 @@ using System.Collections.Generic;
 namespace Arcontio.Core
 {
     /// <summary>
+    /// AddOrMergeResult:
+    /// Esito di MemoryStore.AddOrMerge(...) per telemetria e debug.
+    /// </summary>
+    public enum AddOrMergeResult
+    {
+        Inserted = 0,   // nuova traccia aggiunta
+        Reinforced = 1, // merge su traccia esistente (rinforzo)
+        Replaced = 2,   // store pieno: rimpiazza la peggiore
+        Dropped = 3     // store pieno: incoming troppo debole, scartata
+    }
+
+    /// <summary>
     /// MemoryStore: contenitore di tracce per un NPC.
     ///
     /// Giorno 2:
@@ -31,7 +43,7 @@ namespace Arcontio.Core
         /// Se lo store è pieno e la traccia è "debole",
         /// potrebbe essere scartata.
         /// </summary>
-        public void AddOrMerge(in MemoryTrace incoming)
+        public AddOrMergeResult AddOrMerge(in MemoryTrace incoming)
         {
             // 1) Prova merge con una traccia equivalente
             for (int i = 0; i < _traces.Count; i++)
@@ -41,7 +53,10 @@ namespace Arcontio.Core
                 if (t.Type == incoming.Type &&
                     t.SubjectId == incoming.SubjectId &&
                     t.CellX == incoming.CellX &&
-                    t.CellY == incoming.CellY)
+                    t.CellY == incoming.CellY &&
+                    t.IsHeard == incoming.IsHeard &&
+                    t.HeardKind == incoming.HeardKind &&
+                    t.SourceSpeakerId == incoming.SourceSpeakerId)
                 {
                     // Merge deterministico
                     float mergedIntensity = (t.Intensity01 > incoming.Intensity01) ? t.Intensity01 : incoming.Intensity01;
@@ -59,15 +74,13 @@ namespace Arcontio.Core
                     t.DecayPerTick01 = (t.DecayPerTick01 < incoming.DecayPerTick01) ? t.DecayPerTick01 : incoming.DecayPerTick01;
 
                     _traces[i] = t;
-                    return;
+                    return AddOrMergeResult.Reinforced;
                 }
             }
 
             // 2) Se non c'è merge e lo store è pieno, decidiamo se scartare o sostituire.
             if (_traces.Count >= MaxTraces)
             {
-                // Troviamo la "peggiore" traccia (meno importante) secondo una metrica semplice.
-                // Metrica: importance = Intensity01 * Reliability01
                 int worstIndex = -1;
                 float worstImportance = float.MaxValue;
 
@@ -83,21 +96,18 @@ namespace Arcontio.Core
                     }
                 }
 
-                // Importanza della traccia entrante
                 float incomingImportance = incoming.Intensity01 * incoming.Reliability01;
 
-                // Se la nuova è peggiore o uguale alla peggiore esistente, la scartiamo.
-                // Questo evita che spam di tracce deboli rimpiazzi tracce più significative.
                 if (incomingImportance <= worstImportance)
-                    return;
+                    return AddOrMergeResult.Dropped;
 
-                // Altrimenti sostituiamo la peggiore
                 _traces[worstIndex] = incoming;
-                return;
+                return AddOrMergeResult.Replaced;
             }
 
             // 3) Se c'è spazio, aggiungiamo
             _traces.Add(incoming);
+            return AddOrMergeResult.Inserted;
         }
 
         /// <summary>

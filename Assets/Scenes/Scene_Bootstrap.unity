@@ -177,8 +177,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75f268c8689f85b4a88d69d111c2e8d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  atomviewSceneName: Scene_AtomViewer
-  mapSceneName: Scene_MapGrid
+  atomViewerSceneName: Scene_AtomViewer
+  mapGridName: Scene_MapGrid
 --- !u!114 &1110507249
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -193,6 +193,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Arcontio.Core.SimulationHost
   tickDeltaTime: 1
   ticksPerSecond: 10
+  debugScenario: 8
+  day8LogEveryTicks: 10
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
