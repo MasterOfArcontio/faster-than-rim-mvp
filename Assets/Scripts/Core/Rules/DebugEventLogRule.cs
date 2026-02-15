@@ -1,3 +1,5 @@
+using Arcontio.Core.Diagnostics;
+using Arcontio.Core.Logging;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,25 +20,45 @@ namespace Arcontio.Core
 
             if (e is PredatorSpottedEvent p)
             {
-                Debug.Log($"[Event] PredatorSpotted spotter={p.SpotterNpcId} predator={p.PredatorId} cell=({p.CellX},{p.CellY}) q={p.SpotQuality01:0.00}");
+                ArcontioLogger.Info(
+                    new LogContext(tick: (int)TickContext.CurrentTickIndex, channel: "Event", npcId: p.SpotterNpcId, cell: (p.CellX, p.CellY)),
+                    new LogBlock(LogLevel.Info, "log.event.predator_spotted")
+                        .AddField("predator", p.PredatorId)
+                        .AddField("q", p.SpotQuality01.ToString("0.00"))
+                );
                 return;
             }
 
             if (e is AttackEvent a)
             {
-                Debug.Log($"[Event] Attack attacker={a.AttackerId} defender={a.DefenderId} cell=({a.CellX},{a.CellY}) dmg={a.DamageAmount}");
+                ArcontioLogger.Info(
+                    new LogContext(tick: (int)TickContext.CurrentTickIndex, channel: "Event", npcId: a.AttackerId, cell: (a.CellX, a.CellY)),
+                    new LogBlock(LogLevel.Info, "log.event.attack")
+                        .AddField("defender", a.DefenderId)
+                        .AddField("dmg", a.DamageAmount)
+                );
                 return;
             }
 
             if (e is DeathEvent d)
             {
-                Debug.Log($"[Event] Death victim={d.VictimId} cell=({d.CellX},{d.CellY}) cause={d.Cause} killer={d.KillerId}");
+                ArcontioLogger.Info(
+                    new LogContext(tick: (int)TickContext.CurrentTickIndex, channel: "Event", npcId: d.VictimId, cell: (d.CellX, d.CellY)),
+                    new LogBlock(LogLevel.Info, "log.event.death")
+                        .AddField("cause", d.Cause)
+                        .AddField("killer", d.KillerId)
+                );
                 return;
             }
 
             if (e is NpcWasFed fed)
             {
-                Debug.Log($"[Event] NpcWasFed npc={fed.NpcId} used={fed.UsedFood} hungerAfter={fed.HungerAfter:0.00}");
+                ArcontioLogger.Info(
+                    new LogContext(tick: (int)TickContext.CurrentTickIndex, channel: "Event", npcId: fed.NpcId),
+                    new LogBlock(LogLevel.Info, "log.event.npc_was_fed")
+                        .AddField("used", fed.UsedFood)
+                        .AddField("hungerAfter", fed.HungerAfter.ToString("0.00"))
+                );
                 return;
             }
         }

@@ -1,3 +1,5 @@
+using Arcontio.Core.Diagnostics;
+
 namespace Arcontio.Core
 {
     /// <summary>

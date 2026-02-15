@@ -1,3 +1,5 @@
+using Arcontio.Core.Diagnostics;
+using Arcontio.Core.Logging;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -70,10 +72,19 @@ namespace Arcontio.Core
                         string hk = trace.IsHeard ? trace.HeardKind.ToString() : "Direct";
                         int cd = env.Token.ChainDepth;
 
-                        UnityEngine.Debug.Log(
-                            $"[TokenAssim] listener={env.ListenerId} speaker={env.SpeakerId} " +
-                            $"token={env.Token.Type} subj={env.Token.SubjectId} chain={cd} rel={env.Token.Reliability01:0.00} " +
-                            $"-> trace={trace.Type} heard={hk} rel={trace.Reliability01:0.00} int={trace.Intensity01:0.00}");
+                        ArcontioLogger.Debug(
+                            new LogContext(tick: (int)TickContext.CurrentTickIndex, channel: "TokenAssim", npcId: env.ListenerId),
+                            new LogBlock(LogLevel.Debug, "log.tokenassim.assimilated")
+                                .AddField("speaker", env.SpeakerId)
+                                .AddField("tokenType", env.Token.Type)
+                                .AddField("subj", env.Token.SubjectId)
+                                .AddField("chain", cd)
+                                .AddField("tokenRel", env.Token.Reliability01.ToString("0.00"))
+                                .AddField("traceType", trace.Type)
+                                .AddField("heard", hk)
+                                .AddField("traceRel", trace.Reliability01.ToString("0.00"))
+                                .AddField("int", trace.Intensity01.ToString("0.00"))
+                        );
                     }
 
                     break;
@@ -82,7 +93,14 @@ namespace Arcontio.Core
                 if (!handled)
                 {
                     telemetry.Counter($"TokenAssimilation.Unhandled.{env.Token.Type}", 1);
-                    UnityEngine.Debug.Log($"[TokenAssim] UNHANDLED token: {env}");
+                    ArcontioLogger.Warn(
+                        new LogContext(tick: (int)TickContext.CurrentTickIndex, channel: "TokenAssim", npcId: env.ListenerId),
+                        new LogBlock(LogLevel.Warn, "log.tokenassim.unhandled")
+                            .AddField("speaker", env.SpeakerId)
+                            .AddField("tokenType", env.Token.Type)
+                            .AddField("subject", env.Token.SubjectId)
+                            .AddField("raw", env.ToString())
+                    );
                 }
             }
 

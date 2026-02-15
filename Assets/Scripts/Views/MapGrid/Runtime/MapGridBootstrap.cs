@@ -105,7 +105,12 @@ namespace Arcontio.View.MapGrid
             SetupCamera();
 
             // 9) Spawn NPC placeholder (finché non bindiamo al simulatore)
-            SpawnNpcPlaceholders();
+            //SpawnNpcPlaceholders();
+
+            // 9) Bind World -> View (NPC + Objects)
+            var view = gameObject.GetComponent<MapGridWorldView>();
+            if (view == null) view = gameObject.AddComponent<MapGridWorldView>();
+            view.Init(_cfg);
         }
 
         private void ApplyLayoutToMap(MapGridLayout layout)
@@ -173,7 +178,17 @@ namespace Arcontio.View.MapGrid
 
                     // Mesh chunk
                     var cr = go.AddComponent<MapGridChunkRenderer>();
-                    cr.Build(_map, _atlas, cx, cy, chunkSize, _cfg.tileSizeWorld);
+                    //cr.Build(_map, _atlas, cx, cy, chunkSize, _cfg.tileSizeWorld);
+                    // ---- DF Steam-like visual ids (MVP) ----
+                    // Assunzione: nel tuo atlas registri questi tileId (vedi sezione D)
+                    const int FLOOR_BASE = 0;         // floor_0..floor_3 => 0..3
+                    const int FLOOR_VARIANTS = 4;
+                    const int WALL = 10;
+                    const int WALL_TOP = 11;
+
+                    cr.Build(_map, _atlas, cx, cy, chunkSize, _cfg.tileSizeWorld,
+                        FLOOR_BASE, FLOOR_VARIANTS, WALL, WALL_TOP);
+
                 }
         }
 
@@ -218,10 +233,6 @@ namespace Arcontio.View.MapGrid
             if (ctrl == null)
                 ctrl = panTarget.gameObject.AddComponent<MapGridCameraController>();
 
-            ctrl.Init(worldCamera, _map, _cfg);
-
-            // Controller camera (edge-pan + zoom)
-            //ctrl = target.gameObject.AddComponent<MapGridCameraController>();
             ctrl.Init(worldCamera, _map, _cfg);
         }
 

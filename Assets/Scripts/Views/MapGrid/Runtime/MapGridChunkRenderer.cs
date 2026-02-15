@@ -2,33 +2,17 @@ using UnityEngine;
 
 namespace Arcontio.View.MapGrid
 {
-    /// <summary>
-    /// Render terreno "a chunk" tramite mesh.
-    ///
-    /// Perché chunked?
-    /// - Se la mappa è 200x200 -> 40.000 celle.
-    /// - Un GameObject per tile è ingestibile.
-    /// - Con chunk 16x16, hai mesh da 256 tile ciascuna:
-    ///   - 200/16 ~ 13 chunk per lato -> ~169 chunk totali
-    ///   - molto più efficiente e ragionevole
-    ///
-    /// Questo renderer disegna SOLO il TerrainLayer (layer 0).
-    /// Strutture/overlay/NPC sono layer separati.
-    /// </summary>
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public sealed class MapGridChunkRenderer : MonoBehaviour
     {
         private Mesh _mesh;
 
         /// <summary>
-        /// Costruisce la mesh del chunk (cx,cy) usando i tileId presenti in MapGridData.
-        ///
-        /// Parametri:
-        /// - map: dati cella -> tileId
-        /// - atlas: conversione tileId -> UV
-        /// - chunkX/chunkY: coordinate chunk
-        /// - chunkSize: dimensione chunk (es. 16)
-        /// - tileWorld: dimensione tile in world units (es. 1)
+        /// Regole visive minime “DF Steam-like”.
+        /// - floorBaseTileId: tile base del pavimento (le varianti saranno floorBaseTileId + [0..floorVariantCount-1])
+        /// - floorVariantCount: quante varianti contigue (es. 4)
+        /// - wallTileId: tile muro pieno
+        /// - wallTopTileId: tile "muro con top" (quando sopra c'è floor)
         /// </summary>
         public void Build(
             MapGridData map,
@@ -36,9 +20,12 @@ namespace Arcontio.View.MapGrid
             int chunkX,
             int chunkY,
             int chunkSize,
-            float tileWorld)
+            float tileWorld,
+            int floorBaseTileId,
+            int floorVariantCount,
+            int wallTileId,
+            int wallTopTileId)
         {
-            // Creiamo una mesh solo la prima volta e la riutilizziamo (più efficiente).
             if (_mesh == null)
             {
                 _mesh = new Mesh { name = $"MapGridChunk_{chunkX}_{chunkY}" };
@@ -59,9 +46,6 @@ namespace Arcontio.View.MapGrid
             int cellsH = maxY - startY;
             int cellCount = cellsW * cellsH;
 
-            // Ogni cella = un quad:
-            // - 4 vertici
-            // - 6 indici triangoli (2 triangoli)
             var verts = new Vector3[cellCount * 4];
             var uvs = new Vector2[cellCount * 4];
             var tris = new int[cellCount * 6];
@@ -69,20 +53,16 @@ namespace Arcontio.View.MapGrid
             int v = 0;
             int t = 0;
 
-            // Nota: coordinate world sul piano XY.
-            // Se vuoi pseudo-isometrico stile RimWorld, lo ottieni con camera/transform,
-            // non cambiando la logica della griglia.
             for (int y = startY; y < maxY; y++)
                 for (int x = startX; x < maxX; x++)
                 {
-                    int tileId = map.GetTerrain(x, y);
+                    int tileId = ResolveVisualTileId(map, x, y, floorBaseTileId, floorVariantCount, wallTileId, wallTopTileId);
 
                     atlas.GetUvQuad(tileId, out var uv0, out var uv1, out var uv2, out var uv3);
 
                     float wx = x * tileWorld;
                     float wy = y * tileWorld;
 
-                    // Quad: bottom-left, bottom-right, top-right, top-left
                     verts[v + 0] = new Vector3(wx, wy, 0);
                     verts[v + 1] = new Vector3(wx + tileWorld, wy, 0);
                     verts[v + 2] = new Vector3(wx + tileWorld, wy + tileWorld, 0);
@@ -93,7 +73,6 @@ namespace Arcontio.View.MapGrid
                     uvs[v + 2] = uv2;
                     uvs[v + 3] = uv3;
 
-                    // Triangoli (winding order standard)
                     tris[t + 0] = v + 0;
                     tris[t + 1] = v + 2;
                     tris[t + 2] = v + 1;
@@ -109,9 +88,51 @@ namespace Arcontio.View.MapGrid
             _mesh.vertices = verts;
             _mesh.uv = uvs;
             _mesh.triangles = tris;
-
-            // Bounds necessari per culling corretto.
             _mesh.RecalculateBounds();
+        }
+
+        private static int ResolveVisualTileId(
+            MapGridData map,
+            int x,
+            int y,
+            int floorBaseTileId,
+            int floorVariantCount,
+            int wallTileId,
+            int wallTopTileId)
+        {
+            // 1) Se è bloccata -> muro (con top se sopra è floor).
+            // Assumo che MapGridData esponga IsBlocked(x,y) come nel tuo Bootstrap.
+            if (map.IsBlocked(x, y))
+            {
+                bool hasNorth = map.InBounds(x, y + 1);
+                bool northIsFloor = hasNorth && !map.IsBlocked(x, y + 1);
+
+                return northIsFloor ? wallTopTileId : wallTileId;
+            }
+
+            // 2) Floor variant deterministica (DF-style “vivo ma stabile”)
+            // Nota: non uso Random, uso hash (x,y).
+            if (floorVariantCount <= 1)
+                return floorBaseTileId;
+
+            int h = Hash2D(x, y);
+            int k = Mathf.Abs(h) % floorVariantCount;
+            return floorBaseTileId + k;
+        }
+
+        private static int Hash2D(int x, int y)
+        {
+            unchecked
+            {
+                // hash integer semplice ma stabile
+                int h = 17;
+                h = h * 31 + x;
+                h = h * 31 + y;
+                h ^= (h << 13);
+                h ^= (h >> 17);
+                h ^= (h << 5);
+                return h;
+            }
         }
     }
 }

@@ -24,10 +24,12 @@ namespace Arcontio.Core
         public float Morale01;   // 0=depresso, 1=ottimo
 
         // timer/accumulatori
-        public float HungerRate;
-        public float FatigueRate;
+        //public float HungerRate;
+        //public float FatigueRate;
 
+        // Cache/flag derivati (settati dal NeedsDecaySystem)
         public bool IsHungry;
+        public bool IsTired;
     }
 
     /// <summary>

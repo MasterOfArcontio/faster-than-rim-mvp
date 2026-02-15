@@ -1,6 +1,7 @@
+using Arcontio.Core.Logging;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 namespace Arcontio.Core
 {
@@ -19,7 +20,10 @@ namespace Arcontio.Core
 
         private void Awake()
         {
-            Debug.Log("[ViewSwitcher] Awake START");
+            ArcontioLogger.Debug(
+                new LogContext(tick: (int)TickContext.CurrentTickIndex, channel: "ViewSwitcher"),
+                new LogBlock(LogLevel.Debug, "log.viewswitcher.awake_start")
+            );
             _actions = new ArcontioInputActions();
         }
 
@@ -54,7 +58,11 @@ namespace Arcontio.Core
 
             if (!Application.CanStreamedLevelBeLoaded(sceneName))
             {
-                Debug.LogError($"[ViewSwitcher] Scene '{sceneName}' not in Build Profile/Scenes list.");
+                ArcontioLogger.Error(
+                    new LogContext(tick: (int)TickContext.CurrentTickIndex, channel: "ViewSwitcher"),
+                    new LogBlock(LogLevel.Error, "log.viewswitcher.scene_missing")
+                        .AddField("scene", sceneName)
+                );
                 return;
             }
 

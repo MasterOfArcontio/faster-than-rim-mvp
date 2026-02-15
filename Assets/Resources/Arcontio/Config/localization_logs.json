@@ -1,0 +1,199 @@
+{
+  "entries": [
+    {
+      "key": "log.t9.eat.stock",
+      "it": "Mangia da stock comunitario",
+      "en": "Eat from community stock"
+    },
+    {
+      "key": "log.t9.eat.private",
+      "it": "Mangia da scorta privata",
+      "en": "Eat from private stash"
+    },
+    {
+      "key": "log.t9.sleep",
+      "it": "Dorme",
+      "en": "Sleep"
+    },
+
+    {
+      "key": "log.world.theft.happened",
+      "it": "Furto avvenuto",
+      "en": "Theft occurred"
+    },
+
+    {
+      "key": "log.needsconfig.missing_resource",
+      "it": "NeedsConfig: risorsa mancante, uso default",
+      "en": "NeedsConfig: missing resource, using defaults"
+    },
+    {
+      "key": "log.needsconfig.parse_failed",
+      "it": "NeedsConfig: parsing JSON fallito, uso default",
+      "en": "NeedsConfig: JSON parse failed, using defaults"
+    },
+    {
+      "key": "log.needsconfig.loaded",
+      "it": "NeedsConfig caricato",
+      "en": "NeedsConfig loaded"
+    },
+
+    {
+      "key": "log.event.predator_spotted",
+      "it": "Predatore avvistato",
+      "en": "Predator spotted"
+    },
+    {
+      "key": "log.event.attack",
+      "it": "Attacco",
+      "en": "Attack"
+    },
+    {
+      "key": "log.event.death",
+      "it": "Morte",
+      "en": "Death"
+    },
+    {
+      "key": "log.event.npc_was_fed",
+      "it": "NPC sfamato",
+      "en": "NPC was fed"
+    },
+
+    {
+      "key": "log.t9.plan.summary",
+      "it": "T9: riepilogo comandi piano",
+      "en": "T9: plan commands summary"
+    },
+
+    {
+      "key": "log.core.persistent_path",
+      "it": "PersistentDataPath",
+      "en": "PersistentDataPath"
+    },
+
+    {
+      "key": "log.test.scenario",
+      "it": "Scenario di test",
+      "en": "Test scenario"
+    },
+
+    {
+      "key": "log.tickpulse.tick",
+      "it": "TickPulse",
+      "en": "TickPulse"
+    },
+
+    {
+      "key": "log.t6.predator_injected",
+      "it": "T6: PredatorSpotted iniettato",
+      "en": "T6: PredatorSpotted injected"
+    },
+    {
+      "key": "log.t7.alarmshout.published",
+      "it": "T7: AlarmShout pubblicato",
+      "en": "T7: AlarmShout published"
+    },
+
+    {
+      "key": "log.t8.info",
+      "it": "T8: info runtime",
+      "en": "T8: runtime info"
+    },
+    {
+      "key": "log.memorytest.traces",
+      "it": "MemoryTest: conteggio tracce",
+      "en": "MemoryTest: trace counts"
+    },
+    {
+      "key": "log.arcontio.tick_summary",
+      "it": "Riepilogo tick Arcontio",
+      "en": "Arcontio tick summary"
+    },
+
+    {
+      "key": "log.seed.name",
+      "it": "Seed attivo",
+      "en": "Active seed"
+    },
+    {
+      "key": "log.seed.expectation",
+      "it": "Aspettativa seed",
+      "en": "Seed expectation"
+    },
+
+    {
+      "key": "log.t8.info0",
+      "it": "T8: info iniziali",
+      "en": "T8: initial info"
+    },
+    {
+      "key": "log.t8.snap.missing_pos",
+      "it": "T8: snapshot, posizione mancante",
+      "en": "T8: snapshot, missing position"
+    },
+    {
+      "key": "log.t8.snap.details",
+      "it": "T8: snapshot visione NPC",
+      "en": "T8: NPC vision snapshot"
+    },
+
+    {
+      "key": "log.t9.seed.setup_done",
+      "it": "T9: setup completato",
+      "en": "T9: setup complete"
+    },
+    {
+      "key": "log.t9.seed.npc1",
+      "it": "T9: setup NPC1",
+      "en": "T9: NPC1 setup"
+    },
+    {
+      "key": "log.t9.seed.npc2",
+      "it": "T9: setup NPC2",
+      "en": "T9: NPC2 setup"
+    },
+    {
+      "key": "log.t9.seed.objects",
+      "it": "T9: oggetti setup",
+      "en": "T9: setup objects"
+    },
+
+    {
+      "key": "log.viewswitcher.awake_start",
+      "it": "ViewSwitcher: Awake start",
+      "en": "ViewSwitcher: Awake start"
+    },
+    {
+      "key": "log.viewswitcher.scene_missing",
+      "it": "ViewSwitcher: scena non inclusa in Build Profile",
+      "en": "ViewSwitcher: scene not in Build Profile"
+    },
+
+    {
+      "key": "log.t9.suspect.missing_food",
+      "it": "T9: sospetto, cibo mancante (stock)",
+      "en": "T9: suspect, missing food (stock)"
+    },
+    {
+      "key": "log.t9.suspect.missing_private_food",
+      "it": "T9: sospetto, cibo privato mancante",
+      "en": "T9: suspect, missing private food"
+    },
+
+    {
+      "key": "log.tokenassim.assimilated",
+      "it": "Token assimilato in traccia memoria",
+      "en": "Token assimilated into memory trace"
+    },
+    {
+      "key": "log.tokendelivery.updated",
+      "it": "TokenDelivery: decadimento applicato",
+      "en": "TokenDelivery: decay applied"
+    },
+    {
+      "key": "log.tokenassim.unhandled",
+      "it": "Token non gestito durante assimilazione",
+      "en": "Unhandled token during assimilation"
+    }
+  ]
+}

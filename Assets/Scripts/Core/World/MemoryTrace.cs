@@ -22,6 +22,14 @@ namespace Arcontio.Core
         public int SubjectId;
 
         /// <summary>
+        /// Soggetto secondario opzionale.
+        /// Esempi:
+        /// - TheftWitnessed ? vittima
+        /// - altri eventi ? 0
+        /// </summary>
+        public int SecondarySubjectId;
+
+        /// <summary>
         /// Coordinate della cella a cui la memoria è associata.
         /// -1/-1 se non applicabile.
         /// </summary>

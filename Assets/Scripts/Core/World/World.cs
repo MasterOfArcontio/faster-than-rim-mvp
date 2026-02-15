@@ -42,6 +42,15 @@ namespace Arcontio.Core
         // NEW (Giorno 8): istanze nel mondo (objId -> instance)
         public readonly Dictionary<int, WorldObjectInstance> Objects = new();
 
+        // Food + use state
+        public readonly Dictionary<int, FoodStockComponent> FoodStocks = new();
+        public readonly Dictionary<int, ObjectUseState> ObjectUse = new();
+        public readonly Dictionary<int, int> NpcPrivateFood = new(); // npcId -> units
+
+        // Marker per distinguere "ho mangiato io" vs "mi manca cibo"
+        // npcId -> ultimo tick in cui ha consumato cibo privato
+        public readonly Dictionary<int, long> NpcLastPrivateFoodConsumeTick = new();
+
         // Stato "macro" (risorse comuni, leggi, ecc.) - placeholder
         public GlobalState Global = new();
 
@@ -53,6 +62,10 @@ namespace Arcontio.Core
             Needs.Add(id, needs);
             Social.Add(id, social);
             GridPos.Add(id, new GridPosition(x, y));
+
+            // Cibo di proprietà
+            if (!NpcPrivateFood.ContainsKey(id))
+                NpcPrivateFood[id] = 0;
 
             // Ogni NPC ha un proprio store di memoria (inizialmente vuoto).
             Memory.Add(id, new MemoryStore());
@@ -137,6 +150,18 @@ namespace Arcontio.Core
             return id;
         }
 
+        public ObjectUseState GetUseStateOrDefault(int objectId)
+        {
+            if (ObjectUse.TryGetValue(objectId, out var s)) return s;
+            return ObjectUseState.Free();
+        }
+
+        public void SetUseState(int objectId, ObjectUseState s)
+        {
+            ObjectUse[objectId] = s;
+        }
+
+
         public bool TryGetObject(int objectId, out WorldObjectInstance inst)
             => Objects.TryGetValue(objectId, out inst);
 
@@ -148,6 +173,13 @@ namespace Arcontio.Core
             if (!NpcFacing.ContainsKey(npcId)) return;
             NpcFacing[npcId] = dir;
         }
+        public bool DestroyObject(int objectId)
+        {
+            ObjectUse.Remove(objectId);
+            FoodStocks.Remove(objectId);
+            return Objects.Remove(objectId);
+        }
+
     }
 
     /// <summary>
@@ -179,7 +211,15 @@ namespace Arcontio.Core
         // Range visivo usato per:
         // - ObjectPerceptionSystem (vede letti/workbench ecc.)
         public int NpcVisionRangeCells;
-        public float NpcVisionConeHalfWidthPerStep; // NEW (Day8): 0=linea, 1=cono ampio
+        public float NpcVisionConeHalfWidthPerStep;         // 0=linea, 1=cono ampio
+                                                            // Vision params
+        // Cone vision toggle + slope
+        public bool NpcVisionUseCone;                       // true = cono, false = “linea”/fronte
+        public float NpcVisionConeSlope;                    // es. 0.6f (larghezza cono)
+
+        public NeedsConfig Needs;                           // Gestione bisogni primari
+        
+        public long CurrentTickIndex;                       // runtime only: scritto da SimulationHost ogni tick
 
     }
 

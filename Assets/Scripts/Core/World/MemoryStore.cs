@@ -52,6 +52,7 @@ namespace Arcontio.Core
 
                 if (t.Type == incoming.Type &&
                     t.SubjectId == incoming.SubjectId &&
+                    t.SecondarySubjectId == incoming.SecondarySubjectId &&
                     t.CellX == incoming.CellX &&
                     t.CellY == incoming.CellY &&
                     t.IsHeard == incoming.IsHeard &&

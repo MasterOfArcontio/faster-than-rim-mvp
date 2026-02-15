@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Arcontio.Core
+namespace Arcontio.Core.Diagnostics
 {
     /// <summary>
     /// Telemetry: raccolta contatori e info di debug senza inquinare i systems.

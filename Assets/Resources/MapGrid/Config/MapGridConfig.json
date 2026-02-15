@@ -41,7 +41,7 @@
   },
 
   "npc": {
-    "spriteResourcePath": "MapGrid/Sprites/NPC_Astro",
+    "spriteResourcePath": "MapGrid/Sprites/NPC_00",
     "spawnCount": 12
   }
 }

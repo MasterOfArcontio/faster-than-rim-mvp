@@ -1,0 +1,10 @@
+{
+  "Needs": {
+    "satietyDecayPerTick": 0.0025,
+    "restDecayPerTick": 0.0020,
+    "eatSatietyGain": 0.45,
+    "sleepRestGainPerTick": 0.030,
+    "hungryThreshold": 0.70,
+    "tiredThreshold": 0.70
+  }
+}

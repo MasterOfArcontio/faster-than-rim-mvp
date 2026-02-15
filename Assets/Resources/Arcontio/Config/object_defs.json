@@ -3,6 +3,7 @@
     {
       "Id": "bed_wood_poor",
       "DisplayName": "Wood Bed (Poor)",
+      "SpriteKey": "MapGrid/Sprites/Objects/bed_wood_poor",
       "Properties": [
         {
           "Key": "AllowsAction.Sleep",
@@ -21,6 +22,7 @@
     {
       "Id": "bed_wood_good",
       "DisplayName": "Wood Bed (Good)",
+      "SpriteKey": "MapGrid/Sprites/Objects/bed_wood_good",
       "Properties": [
         {
           "Key": "AllowsAction.Sleep",
@@ -39,6 +41,7 @@
     {
       "Id": "workbench_basic",
       "DisplayName": "Workbench (Basic)",
+      "SpriteKey": "MapGrid/Sprites/Objects/workbench_basic",
       "Properties": [
         {
           "Key": "AllowsAction.Work",
@@ -53,6 +56,7 @@
     {
       "Id": "chair_basic",
       "DisplayName": "Chair (Basic)",
+      "SpriteKey": "MapGrid/Sprites/Objects/chair_basic",
       "Properties": [
         {
           "Key": "AllowsAction.Sit",
@@ -61,6 +65,17 @@
         {
           "Key": "ComfortBonus",
           "Value": 0.08
+        }
+      ]
+    },
+    {
+      "Id": "food_stock",
+      "DisplayName": "Food Stock",
+      "SpriteKey": "MapGrid/Sprites/Objects/food_stock",
+      "Properties": [
+        {
+          "Key": "FoodStock",
+          "Value": 1.0
         }
       ]
     }

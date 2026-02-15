@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Arcontio.Core.Diagnostics;
 
 namespace Arcontio.Core
 {

@@ -1,3 +1,5 @@
+using Arcontio.Core.Diagnostics;
+using Arcontio.Core.Logging;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -113,7 +115,15 @@ namespace Arcontio.Core
                 // DEBUG throttled: così vedi “muro corto vs muro lungo”
                 if ((tick.Index % 50) == 0)
                 {
-                    Debug.Log($"[TokenDelivery] {env.Channel} {env.SpeakerId}->{env.ListenerId} dist={effectiveDist} rel {env.Token.Reliability01:0.00}->{newRel:0.00} int {env.Token.Intensity01:0.00}->{newInt:0.00}");
+                    ArcontioLogger.Debug(
+                        new LogContext(tick: (int)TickContext.CurrentTickIndex, channel: "TokenDelivery"),
+                        new LogBlock(LogLevel.Debug, "log.tokendelivery.updated")
+                            .AddField("channel", env.Channel)
+                            .AddField("route", $"{env.SpeakerId}->{env.ListenerId}")
+                            .AddField("dist", effectiveDist)
+                            .AddField("rel", $"{env.Token.Reliability01:0.00}->{newRel:0.00}")
+                            .AddField("int", $"{env.Token.Intensity01:0.00}->{newInt:0.00}")
+                    );
                 }
             }
 

@@ -192,8 +192,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Arcontio.Core.SimulationHost
   tickDeltaTime: 1
-  ticksPerSecond: 10
-  debugScenario: 8
+  ticksPerSecond: 30
+  debugScenario: 9
   day8LogEveryTicks: 10
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

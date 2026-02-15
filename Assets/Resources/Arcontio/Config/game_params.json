@@ -1,0 +1,14 @@
+{
+  "Language": "it",
+  "Logging": {
+    "MinLevel": "Trace",
+    "WriteUnityConsole": true,
+    "WriteFile": true,
+
+    "FileFormat": "html",
+    "FileNamePattern": "arcontio_{yyyyMMdd_HHmmss}.html",
+
+    "IncludeTimestamp": true,
+    "IncludeTick": true
+  }
+}
