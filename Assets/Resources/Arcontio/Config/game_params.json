@@ -1,4 +1,6 @@
 {
+  "worldWidth": 64,
+  "worldHeight": 64,
   "Language": "it",
   "Logging": {
     "MinLevel": "Trace",

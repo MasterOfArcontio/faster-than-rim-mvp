@@ -4,6 +4,8 @@
       "Id": "bed_wood_poor",
       "DisplayName": "Wood Bed (Poor)",
       "SpriteKey": "MapGrid/Sprites/Objects/bed_wood_poor",
+      "IsOccluder": false,
+      "IsInteractable": true,
       "Properties": [
         {
           "Key": "AllowsAction.Sleep",
@@ -23,6 +25,8 @@
       "Id": "bed_wood_good",
       "DisplayName": "Wood Bed (Good)",
       "SpriteKey": "MapGrid/Sprites/Objects/bed_wood_good",
+      "IsOccluder": false,
+      "IsInteractable": true,
       "Properties": [
         {
           "Key": "AllowsAction.Sleep",
@@ -42,6 +46,8 @@
       "Id": "workbench_basic",
       "DisplayName": "Workbench (Basic)",
       "SpriteKey": "MapGrid/Sprites/Objects/workbench_basic",
+      "IsOccluder": false,
+      "IsInteractable": true,
       "Properties": [
         {
           "Key": "AllowsAction.Work",
@@ -57,6 +63,8 @@
       "Id": "chair_basic",
       "DisplayName": "Chair (Basic)",
       "SpriteKey": "MapGrid/Sprites/Objects/chair_basic",
+      "IsOccluder": false,
+      "IsInteractable": true,
       "Properties": [
         {
           "Key": "AllowsAction.Sit",
@@ -72,12 +80,26 @@
       "Id": "food_stock",
       "DisplayName": "Food Stock",
       "SpriteKey": "MapGrid/Sprites/Objects/food_stock",
+      "IsOccluder": false,
+      "IsInteractable": true,
       "Properties": [
         {
           "Key": "FoodStock",
           "Value": 1.0
         }
       ]
+    },
+    {
+      "Id": "wall_stone",
+      "DisplayName": "Stone Wall",
+      "SpriteKey": "MapGrid/Sprites/Objects/Wall_stone",
+      "IsOccluder": true,
+      "IsInteractable": false,
+      "BlocksVision": true,
+      "BlocksMovement": true,
+      "VisionCost": 1.0,
+      "MaxHp": 200,
+      "Hardness": 0.8
     }
   ]
 }
