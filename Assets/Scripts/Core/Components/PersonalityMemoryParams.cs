@@ -36,11 +36,15 @@ namespace Arcontio.Core
         /// (Giorno 6–7: entra nell'assimilazione token)
         /// </summary>
         public float Gullibility01;
+        
+        // Capacità massima di tracce in MemoryStore per NPC.
+        public int MaxTraces;
 
         public static PersonalityMemoryParams DefaultNpc()
         {
             return new PersonalityMemoryParams
             {
+                MaxTraces = 128,                    // default ragionevole per test; rendilo config quando vuoi
                 TraumaSensitivity01 = 0.50f,
                 Resilience01 = 0.50f,
                 Rumination01 = 0.25f,

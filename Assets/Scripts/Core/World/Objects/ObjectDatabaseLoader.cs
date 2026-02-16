@@ -46,6 +46,10 @@ namespace Arcontio.Core
                 if (def == null) continue;
                 if (string.IsNullOrWhiteSpace(def.Id)) continue;
 
+                // Normalizza alcuni default utili
+                if (def.VisionCost <= 0f) def.VisionCost = 1f;
+                if (def.Properties == null) def.Properties = new System.Collections.Generic.List<ObjectPropertyKV>();
+
                 world.ObjectDefs[def.Id] = def;
                 added++;
             }

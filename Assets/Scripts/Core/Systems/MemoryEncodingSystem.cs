@@ -227,14 +227,14 @@ namespace Arcontio.Core
         {
             foreach (var cell in BresenhamCellsBetween(x0, y0, x1, y1))
             {
-                if (!world.TryGetOccluder(cell.x, cell.y, out var occ))
+                if (!world.TryGetOccluder(cell.x, cell.y, out bool blocksVision, out bool blocksMovement, out float visionCost))
                     continue;
 
-                if (!occ.BlocksVision)
+                if (!blocksVision)
                     continue;
 
                 // muro pieno -> blocca
-                if (occ.VisionCost >= 1f)
+                if (visionCost >= 1f)
                     return true;
             }
             return false;

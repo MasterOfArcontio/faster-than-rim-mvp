@@ -122,8 +122,12 @@ namespace Arcontio.Core
                     .AddComponent<Arcontio.View.ArcontioLogOverlay>();
             }
 
-            // Inizializzo una sola volta
-            _world = new World();
+            // Inizializzo una sola volta il mondo
+            // Leggo da file game_params.json i dati di simulazione, che finiscono in simParams.
+            // Con quello creo l'istanza di world
+            var simParams = Arcontio.Core.Config.SimulationParamsLoader.LoadFromResources("Arcontio/Config/game_params");
+            _world = new World(new WorldConfig(simParams));
+
             _bus = new MessageBus();
             _scheduler = new Scheduler();
             _telemetry = new Telemetry();
@@ -737,9 +741,47 @@ namespace Arcontio.Core
 
             // Occluder per “nascondere” stock libero #2 a NPC1 (blocca LOS percezione)
             // Nota: questo funziona solo se in ObjectPerceptionSystem hai check LOS sugli occluder.
-            _world.SetOccluder(2, 1, new Occluder { BlocksVision = true, BlocksMovement = true, VisionCost = 1f });
-            _world.SetOccluder(2, 2, new Occluder { BlocksVision = true, BlocksMovement = true, VisionCost = 1f });
-            _world.SetOccluder(2, 3, new Occluder { BlocksVision = true, BlocksMovement = true, VisionCost = 1f });
+            //_world.SetOccluder(2, 1, new Occluder { BlocksVision = true, BlocksMovement = true, VisionCost = 1f });
+
+            int wall = _world.CreateObject(defId: "wall_stone", x: 22, y: 23);
+            ArcontioLogger.Debug(new LogContext(0, "T9"),
+                                 new LogBlock(LogLevel.Debug, "object.spawn")
+                                 .AddField("obj", "wall_stone")
+                                 .AddField("id", wall));
+             wall = _world.CreateObject(defId: "wall_stone", x: 22, y: 22);
+            ArcontioLogger.Debug(new LogContext(0, "T9"),
+                                 new LogBlock(LogLevel.Debug, "object.spawn")
+                                 .AddField("obj", "wall_stone")
+                                 .AddField("id", wall));
+             wall = _world.CreateObject(defId: "wall_stone", x: 22, y: 21);
+            ArcontioLogger.Debug(new LogContext(0, "T9"),
+                                 new LogBlock(LogLevel.Debug, "object.spawn")
+                                 .AddField("obj", "wall_stone")
+                                 .AddField("id", wall));
+             wall = _world.CreateObject(defId: "wall_stone", x: 22, y: 20);
+            ArcontioLogger.Debug(new LogContext(0, "T9"),
+                                 new LogBlock(LogLevel.Debug, "object.spawn")
+                                 .AddField("obj", "wall_stone")
+                                 .AddField("id", wall));
+            wall = _world.CreateObject(defId: "wall_stone", x: 22, y: 19);
+            ArcontioLogger.Debug(new LogContext(0, "T9"),
+                                 new LogBlock(LogLevel.Debug, "object.spawn")
+                                 .AddField("obj", "wall_stone")
+                                 .AddField("id", wall));
+            wall = _world.CreateObject(defId: "wall_stone", x: 22, y: 18);
+            ArcontioLogger.Debug(new LogContext(0, "T9"),
+                                 new LogBlock(LogLevel.Debug, "object.spawn")
+                                 .AddField("obj", "wall_stone")
+                                 .AddField("id", wall));
+            wall = _world.CreateObject(defId: "wall_stone", x: 22, y: 17);
+            ArcontioLogger.Debug(new LogContext(0, "T9"),
+                                 new LogBlock(LogLevel.Debug, "object.spawn")
+                                 .AddField("obj", "wall_stone")
+                                 .AddField("id", wall));
+
+
+            //_world.SetOccluder(2, 2, new Occluder { BlocksVision = true, BlocksMovement = true, VisionCost = 1f });
+            //_world.SetOccluder(2, 3, new Occluder { BlocksVision = true, BlocksMovement = true, VisionCost = 1f });
 
             // NPC1: basso rispetto legge (ruberà “facile”)
             int npc1 = _world.CreateNpc(

@@ -147,14 +147,14 @@ namespace Arcontio.Core
         {
             foreach (var cell in BresenhamCellsBetween(x0, y0, x1, y1))
             {
-                if (!world.TryGetOccluder(cell.x, cell.y, out var occ))
+                if (!world.TryGetOccluder(cell.x, cell.y, out bool blocksVision, out bool blocksMovement, out float visionCost))
                     continue;
 
-                if (!occ.BlocksVision)
+                if (!blocksVision)
                     continue;
 
                 // v0: se è un muro pieno, blocchiamo del tutto
-                float cost = occ.VisionCost;
+                float cost = visionCost;
                 if (cost >= 1f)
                     return true;
             }
@@ -228,9 +228,9 @@ namespace Arcontio.Core
         {
             // v0: il suono non attraversa muri “fisici”
             // (se vuoi usare BlocksVision invece, cambia qui)
-            if (world.TryGetOccluder(x, y, out var occ))
+            if (world.TryGetOccluder(x, y, out bool blocksVision, out bool blocksMovement, out float visionCost))
             {
-                if (occ.BlocksMovement && occ.VisionCost >= 1f)
+                if (blocksMovement && visionCost >= 1f)
                     return;
             }
 
