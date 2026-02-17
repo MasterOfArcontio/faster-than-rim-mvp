@@ -276,8 +276,9 @@ namespace Arcontio.Core
 
             Objects[id] = inst;
 
-            // Se è un occluder, aggiorna la occlusion map.
-            if (TryGetObjectDef(defId, out var def) && def != null && def.IsOccluder)
+            // Se è un occluder oppure blocca la visione o il movimento, aggiorna la occlusion map.
+            if (TryGetObjectDef(defId, out var def) && def != null &&
+                               (def.IsOccluder || def.BlocksVision || def.BlocksMovement))
             {
                 PlaceOccluderInCache(id, x, y, def);
             }

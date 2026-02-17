@@ -778,6 +778,26 @@ namespace Arcontio.Core
                                  new LogBlock(LogLevel.Debug, "object.spawn")
                                  .AddField("obj", "wall_stone")
                                  .AddField("id", wall));
+            wall = _world.CreateObject(defId: "wall_stone", x: 23, y: 17);
+            ArcontioLogger.Debug(new LogContext(0, "T9"),
+                                 new LogBlock(LogLevel.Debug, "object.spawn")
+                                 .AddField("obj", "wall_stone")
+                                 .AddField("id", wall));
+            wall = _world.CreateObject(defId: "wall_stone", x: 24, y: 17);
+            ArcontioLogger.Debug(new LogContext(0, "T9"),
+                                 new LogBlock(LogLevel.Debug, "object.spawn")
+                                 .AddField("obj", "wall_stone")
+                                 .AddField("id", wall));
+            wall = _world.CreateObject(defId: "wall_stone", x: 25, y: 17);
+            ArcontioLogger.Debug(new LogContext(0, "T9"),
+                                 new LogBlock(LogLevel.Debug, "object.spawn")
+                                 .AddField("obj", "wall_stone")
+                                 .AddField("id", wall));
+            wall = _world.CreateObject(defId: "wall_stone", x: 26, y: 17);
+            ArcontioLogger.Debug(new LogContext(0, "T9"),
+                                 new LogBlock(LogLevel.Debug, "object.spawn")
+                                 .AddField("obj", "wall_stone")
+                                 .AddField("id", wall));
 
 
             //_world.SetOccluder(2, 2, new Occluder { BlocksVision = true, BlocksMovement = true, VisionCost = 1f });
@@ -799,9 +819,17 @@ namespace Arcontio.Core
                 x: 20, y: 22
             );
 
+            // NPC3: alto rispetto legge (non ruba; ha cibo privato)
+            int npc3 = _world.CreateNpc(
+                new NpcCore { Name = "NPC3", Charisma = 0.4f, Decisiveness = 0.4f, Empathy = 0.4f, Ambition = 0.4f },
+                new Needs { Hunger01 = 0.80f, Fatigue01 = 0.40f, Morale01 = 0.7f, IsHungry = false },
+                new Social { LeadershipScore = 0.2f, LoyaltyToLeader01 = 0.5f, JusticePerception01 = 0.90f },
+                x: 28, y: 19
+            );
             // Facing: NPC1 guarda verso "su" dove mettiamo letti/food
             _world.SetFacing(npc1, CardinalDirection.North);
             _world.SetFacing(npc2, CardinalDirection.North);
+            _world.SetFacing(npc3, CardinalDirection.West);
 
             // --- Oggetti: letti ---
             int bedCommunity = _world.CreateObject(defId: "bed_wood_poor", x: 20, y: 23, ownerKind: OwnerKind.Community, ownerId: 0);
